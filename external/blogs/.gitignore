@@ -1,0 +1,89 @@
+__hidden/
+__HIDDEN__/
+*__hidden__*
+*.swp
+
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+env/
+bin/
+build/
+develop-eggs/
+dist/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.cache
+nosetests.xml
+coverage.xml
+
+# Translations
+*.mo
+
+# Mr Developer
+.mr.developer.cfg
+.project
+.pydevproject
+
+# Rope
+.ropeproject
+
+# Django stuff:
+*.log
+*.pot
+
+# Emacs
+*~
+
+# Macs
+.DS_Store
+
+*.csv    #Exclude all csv
+!2013_movies.csv #Except for movies
+!titanic_train.csv
+
+# DATA
+turnstile_??????.txt
+.ipynb_checkpoints/
+benson/turnstile_key.*
+turnstile_key.*
+.DS_Store
+gitbook_helpers/*
+ZShoes/*
+2018/Transfer_Learning_Shoes/ZShoes/*
+Features.csv
+fonts.hdf5
+Images/*
+2018/VisualizatioBook/*
+2018/Transfer_Learning_Shoes/*
+2018/Transfer_Learning_Retina/*
+2018/Transfer_Learning_OCT_Kaggle/OCT2017/*
+2018/Transfer_Learning_OCT_Kaggle/*.csv
+2018/Transfer_Learning_OCT_Kaggle/Blog/*
+2018/Switchup/*
+2018/ROC-Churn/*
+2018/MetisBlog/*
+2018/DataScienceIsAScience/*
