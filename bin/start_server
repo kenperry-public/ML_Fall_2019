@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# Start running the tools we need
+
+nohup vncserver  -geometry 1280x1024 :1 > ~/vnc_cmd.log
+
+# Start jupyter
+source ~/.bashrc
+cd Notebooks
+nohup jupyter notebook  > ~/jupyter_cmd.log &
+
+

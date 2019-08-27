@@ -1,0 +1,4 @@
+#!/bin/bash
+
+cd ~/Notebooks/NYU
+./bin/create_git "NYU"

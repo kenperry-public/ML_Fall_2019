@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# Install contributed extensions
+conda install -y -c conda-forge jupyter_contrib_nbextensions
+
+# Activate extensions
+jupyter nbextension enable toc2/main
+jupyter nbextension enable collapsible_headings/main
+jupyter nbextension enable livemdpreview/livemdpreview

@@ -1,0 +1,5 @@
+#!/bin/sh
+ROOTDIR=~/Notebooks/NYU
+
+# Seems to wreck the repo: by adding files without their parents ?
+find . -name "*py*" -newer $ROOTDIR/.git/index -exec git add {} \;

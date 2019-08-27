@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# --dry-run is a good option: shows what would be changed without actually making the changes
+
+OPTS=$*
+SOURCE=~/Notebooks/NYU/
+TARGET=~/Notebooks/release/NYU/Fall_2019
+
+echo $SOURCE $TARGET
+
+rsync -avzr $OPTS  --exclude .git --exclude .ipynb_checkpoints $SOURCE $TARGET

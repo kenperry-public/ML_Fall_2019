@@ -1,0 +1,18 @@
+#!/bin/sh
+
+REMOTE_IP=$1
+echo "Remote:"
+echo $1
+
+KEYDIR=~/aws/kaggle
+KEYFILE="ken-kaggle.pem"
+
+# Create a tunnel between localhost:5901 and remote's prot 5901
+ssh -i $KEYDIR/$KEYFILE -N -f -L 5901:localhost:5901 ubuntu@$REMOTE_IP
+
+
+# Now, use a VNC client to connect to localhost:5901
+# remmina doesn't take command line args except for profiles (which are files)
+echo "Start your Remote Desktop Client (e.g, remmina); chose \"localhost:1\"'
+"
+

@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# Disable root login
+sudo passwd -l root
+
+# Remove existing shell history
+shred -u ~/.*history
+
+# If you do this, you will no longer be able to ssh into the machine !
+# Remove ssh host key pairs
+sudo shred -u /etc/ssh/*_key /etc/ssh/*_key.pub

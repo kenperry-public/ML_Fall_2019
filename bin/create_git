@@ -1,0 +1,8 @@
+#!/bin/bash
+
+REPO=$1
+
+git init
+
+git remote add origin https://github.com/kenperry-public/$REPO.git
+git config credential.helper 'cache --timeout=7200'

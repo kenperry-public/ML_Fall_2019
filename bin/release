@@ -1,0 +1,10 @@
+#!/bin/sh
+
+SOURCE=~/Notebooks/NYU
+TARGET=~/Notebooks/release/NYU
+
+# Exclude
+# "." - don't want entire current directory ! Defeats the purpose of exclude
+# ".git/"
+# ".git*"
+(cd $SOURCE; find . ! -path "." ! -path "*/.git/*"  ! -path "*git*" -print  )  | ( tar -T- -czvf-) | (cd $TARGET; tar -zxvf-)

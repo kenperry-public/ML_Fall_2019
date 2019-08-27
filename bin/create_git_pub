@@ -1,0 +1,4 @@
+#!/bin/bash
+
+cd ~/Notebooks/release/NYU/Fall_2019
+./bin/create_git "ML_Fall_2019"

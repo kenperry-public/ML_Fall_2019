@@ -1,0 +1,96 @@
+#!/bin/bash
+
+# Make sure you're in home directory
+cd
+
+
+# Go to Annaconda download and get installer
+wget https://repo.continuum.io/archive/Anaconda3-2018.12-Linux-x86_64.sh
+
+#. Run the downloaded file
+# Do NOT allow installer to ~/anaconda3/bin to PATH, we do it ourselves below
+bash Anaconda3-2018.12-Linux-x86_64.sh -b
+
+# Prepend Anaconda to PATH and re-source
+echo 'export PATH=~/anaconda3/bin:$PATH' >> ~/.bashrc
+export PATH=~/anaconda3/bin:$PATH
+source ~/.bashrc
+
+#  Jupyter setup (see https://docs.aws.amazon.com/dlami/latest/devguide/setup-jupyter-configure-server.html)
+# Generate and modify config file
+jupyter notebook --generate-config
+echo "c.NotebookApp.ip = '*'" >> ~/.jupyter/jupyter_notebook_config.py
+echo "c.NotebookApp.open_browser = False" >> ~/.jupyter/jupyter_notebook_config.py
+echo "c.NotebookApp.allow_remote_access = True" >> ~/.jupyter/jupyter_notebook_config.py
+
+
+# Install contributed extensions
+conda install -y -c conda-forge jupyter_contrib_nbextensions
+
+# Activate extensions
+jupyter nbextension enable toc2/main
+jupyter nbextension enable collapsible_headings/main
+jupyter nbextension enable livemdpreview/livemdpreview
+
+# Extension for slides
+conda install -y -c conda-forge rise
+jupyter nbextension enable rise
+
+# Create a notebook password
+# n.b. won't work for jupyter version < 5.0
+echo ""
+echo ""
+echo "CREATE a password to be used to access Jupyter remotely (i.e., not to log onto server or any other account)"
+jupyter notebook password
+
+# Create directory for notebooks
+cd
+mkdir Notebooks
+cd Notebooks
+
+# Clone git repositories
+git clone https://github.com/kenperry-public/ML_Spring_2019.git
+git clone https://github.com/jakevdp/PythonDataScienceHandbook.git
+git clone https://github.com/ageron/handson-ml.git
+
+#  Can't install emacs w/o this
+# Just select "Keep the local version currently installed" to all prompts about new versions of grub
+# Does this destroy: jupyter notebook ?!! Seems to if run after we installed notbook
+#sudo apt update
+#sudo apt -y upgrade
+
+# Update list of packages
+sudo apt update
+
+# Install other stuff (not strictly needed for course)
+# VNC so  you can remote into the machine
+
+sudo apt install -y xfce4 xfce4-goodies tightvncserver
+
+# I prefer Chrome, but slightly more complicated to install
+sudo apt install -y firefox
+
+# Install Chrome
+cd ~
+wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+sudo dpkg -i google-chrome-stable_current_amd64.deb
+sudo apt --fix-broken install -y
+
+# Disable root login
+sudo passwd -l root
+
+# Create a VNC password (if you don't do it here, you will be prompted the first time you start vncserver)
+echo ""
+echo ""
+echo "CREATE a password to be used to get a remote desktop"
+
+vncpasswd
+
+# Start running the tools we need
+
+nohup vncserver  -geometry 1280x1024 :1 > ~/vncserver_cmd.log
+
+# Start jupyter
+source ~/.bashrc
+cd Notebooks
+nohup jupyter notebook  > ~/jupyter_cmd.log &

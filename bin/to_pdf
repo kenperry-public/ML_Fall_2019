@@ -1,0 +1,17 @@
+#!/bin/sh
+
+# NO .ipynb suffix
+IPYNB=$1
+
+BROWSER=google-chrome
+
+echo "After browser lauches, Change URL to: "
+echo "http://127.0.0.1:8000/$IPYNB.slides.html?print-pdf"
+
+jupyter nbconvert --to slides $IPYNB.ipynb  --post serve &
+
+sleep 2
+
+$BROWSER http://127.0.0.1:8000/$IPYNB.slides.html?print-pdf
+
+
