@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import matplotlib as mpl
 
 from sklearn import datasets, neighbors, linear_model
@@ -9,6 +10,8 @@ import functools
 import itertools
 
 from ipywidgets import interact, fixed
+
+from sklearn.datasets import make_classification
 
 import pdb
 
@@ -363,3 +366,130 @@ class Classification_Helper():
         fig.tight_layout()
 
         return fig, axes
+
+class NB_Helper():
+    def __init__(self, **params):
+        return
+
+    def gen_fin_cluster(self,
+                        n_samples=100,
+                        feature_names=[],
+                        target_name="target",
+                        class_names=[],
+                        feature_to_value=None,
+                        random_state=10,
+                        n_informative=None, n_redundant=0, n_repeated=0,
+                        n_clusters_per_class=1
+                        ):
+
+        n_features = len(feature_names)
+        n_classes  = len(class_names)
+        
+        if n_informative is None:
+            n_informative = n_features
+                        
+
+        X,y = make_classification(n_samples=n_samples, n_features=n_features, n_classes=n_classes,
+                                  n_informative=2, 
+                                  n_redundant=0,
+                                  n_repeated=0,
+                                  n_clusters_per_class=1,
+                                  class_sep=1.0,
+                                  random_state=random_state
+                                  )
+
+        # Map class integers to class_names
+        y_classes = [ class_names[c_num] for c_num in y ]
+
+        # DataFrames of numbers
+        X_df = pd.DataFrame(X, columns=feature_names)
+        y_df = pd.DataFrame(y, columns=[target_name])
+
+        df = pd.concat( [X_df, y_df], axis=1)
+        df_sorted = df.sort_values(by=feature_names)
+
+        # Create DataFrames of labels
+        X_label_df = X_df.copy()
+        y_label_df = y_df.copy()
+
+        y_label_df = pd.DataFrame(class_names, columns=["target"])
+
+        
+        # Map feature values to names
+        if feature_to_value is not None:
+            # For each feature: map values to names
+            for feat, feat_list in feature_to_value.items():
+                num_feats = len(feat_list)
+
+                # Bucket the values in column "feat"
+                X_label_df[ feat ] = pd.cut(X_label_df[feat], bins=len(feat_list),
+                                                     labels=feat_list)
+
+                
+        return X_label_df, y_label_df, X_df,y_df,
+
+    def map_num_to_cat(self, X, y, feat_map, class_map):
+        X_new_dict = {}
+        
+        # Map each feature
+        for feat_name, feat_list in feat_map.items():
+            # Create a series (column values) for the new values of the feature
+            labels = pd.Series( [ None ] * X.shape[0] )
+            X_new_dict[feat_name] = labels
+            
+            # Apply each mapping for feature feat_name
+            for i, one_map in enumerate(feat_list):
+                min_val, max_val, label = [ one_map[k] for k in ("min", "max", "class") ]
+                labels[ (X[feat_name] > min_val) & (X[feat_name] <= max_val) ] = label
+
+        # Create data frame from X_new_dict
+        X_new = pd.DataFrame.from_dict(X_new_dict)
+
+        # Map the targets
+        targets = pd.Series( [ None ] * y.shape[0] )
+        target_name = y.columns[0]
+        for class_num, label in class_map.items():
+            targets[ y[target_name] == class_num ] = label
+
+        y_new = pd.DataFrame.from_dict( { target_name: targets } )
+        
+        return X_new,  y_new
+            
+    def gen_stock_recommend_data(self):
+        feature_names = ["Valuation", "Yield"]
+
+        # n.b., can't control the order of class 
+        class_names   = [ "Short", "Neutral", "Long" ]
+
+        feature_to_value = { "Valuation": [ "Rich", "Fair", "Cheap"],
+                             "Yield": [ "Low", "High"]
+                             }
+
+
+        X_df, y_df, X_num_df, y_num_df = self.gen_fin_cluster(n_samples=20, 
+                                                             feature_names=feature_names, class_names=class_names,
+                                                             feature_to_value=feature_to_value,
+                                                             random_state=10
+                                                             )
+        
+
+
+        class_map, feat_map = {},  {}
+        class_map = { 0: "Neutral", 1: "Short", 2: "Long"}
+
+        feat_map["Valuation"] = [ {"min": -10,  "max": -1, "class": "Rich" },
+                                  {"min": -1,  "max":   0.6, "class": "Fair" },
+                                  {"min":  0.6,  "max":  10, "class":  "Cheap" }
+                                  ]
+
+        feat_map["Yield"]   = [ { "min": -10, "max":-1.0 , "class": "Low" }, 
+                                { "min": -1.0,    "max": 10, "class": "High" }
+                                ]
+
+
+        X_new, y_new = self.map_num_to_cat(X_num_df, y_num_df, feat_map, class_map)
+        new_df = pd.concat([X_new, y_new], axis=1)
+        new_df.index.name = "#"
+
+        return new_df
+    
