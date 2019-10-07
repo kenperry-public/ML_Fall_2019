@@ -57,14 +57,16 @@ class SVM_Helper():
         _= ax.legend()
 
     def plot_log_p(self, hinge_pt=None):
-        fig, axs = plt.subplots(1,2, figsize=(16, 8))
+        fig, axs = plt.subplots(1,2, figsize=(12, 4.5))
 
         score = np.linspace(-3,+3, num=100)
         _ = self.plot_pos_examples(score, axs[0], hinge_pt=hinge_pt)
         _ = self.plot_neg_examples(score, axs[1], hinge_pt=hinge_pt)
+        
+        fig.tight_layout()
 
     def plot_hinges(self, hinge_pt=0):
-        fig, axs = plt.subplots(1,2, figsize=(16, 8))
+        fig, axs = plt.subplots(1,2, figsize=(12, 4.5))
         score = np.linspace(-3,+3, num=100)
         hinge_p = np.maximum(hinge_pt, -score)
         hinge_n = np.maximum(hinge_pt,  score)
@@ -76,6 +78,8 @@ class SVM_Helper():
         _= axs[1].plot(score, hinge_n)
         _= axs[1].set_label("Score")
         _= axs[1].set_title("Negative examples")
+
+        fig.tight_layout()
 
 
     # Adapted from external/PythonDataScienceHandbook/notebooks/05.07-Support-Vector-Machines.ipynb

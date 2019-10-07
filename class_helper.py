@@ -12,11 +12,18 @@ import itertools
 from ipywidgets import interact, fixed
 
 from sklearn.datasets import make_classification
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+
+from sklearn.metrics import roc_curve
+from sklearn.metrics import roc_auc_score
 
 import pdb
 
 class Classification_Helper():
     def __init__(self, **params):
+        self.Debug = False
         return
 
     def load_digits(self):
@@ -366,6 +373,77 @@ class Classification_Helper():
         fig.tight_layout()
 
         return fig, axes
+
+    def AUC_plot(self,  X_train=None, X_test=None, y_train=None, y_test=None):
+        if X_train is None:
+            X_train = self.X_train
+
+        if X_test is None:
+            X_test = self.X_test
+
+        if y_train is None:
+            y_train = self.y_train
+
+        if y_test is None:
+            y_test = self.y_test
+            
+
+        clf_lr = LogisticRegression(C=50. / X_train.shape[0],  # n.b. C is 1/(regularization penalty)
+                                    multi_class='multinomial',
+                                    # penalty='l1',   # n.b., "l1" loss: sparsity (number of non-zero) >> "l2" loss (dafault)
+                                    solver='saga', tol=0.1)
+
+        clf_rf =  RandomForestClassifier(n_estimators=10, random_state=42)
+
+        clf_knn = KNeighborsClassifier(n_neighbors=3)
+
+        # fit a model
+        models = { "Logistic Regression": clf_lr,
+                   "Random Forest": clf_rf,
+                   "KNN": clf_knn
+        }
+
+        fig, axs = plt.subplots(1, len(models), figsize=(12,6))
+
+        model_num = 0
+        
+        # Fit each model and plot an ROC curve
+        for name, model in models.items():
+            # Axis for this model
+            ax = axs[model_num]
+            model_num += 1
+
+            if self.Debug:
+                print(name)
+                
+            model.fit(X_train, y_train)
+
+            # predict probabilities
+            probs = model.predict_proba(X_test)
+
+            # keep probabilities for the positive outcome only
+            # n.b., roc_auc_score needs scores, not probabilities
+            # - some models can do this via the "decision_funciton" arg.
+            # - for those that can't, just use the probability of a single class
+            scores = probs[:, 1]
+
+            # calculate AUC
+            auc = roc_auc_score(y_test, scores)
+
+            # calculate roc curve
+            fpr, tpr, thresholds = roc_curve(y_test, scores)
+            # plot no skill
+            ax.plot([0, 1], [0, 1], linestyle='--')
+            # plot the roc curve for the model
+            ax.plot(fpr, tpr, marker='.')
+
+
+            ax.set_xlabel("False Positive Rate")
+            ax.set_ylabel("True Positive Rate")
+            
+            ax.set_title( "{m:s} (AUC={auc:3.2f})".format(m=name, auc=auc) )
+
+        fig.tight_layout()
 
 class NB_Helper():
     def __init__(self, **params):

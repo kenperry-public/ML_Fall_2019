@@ -112,9 +112,13 @@ class MNIST_Helper():
 
             _ = plt.imshow(img, cmap="gray")
 
-    def fit(self):
-        X_train, y_train = self.X_train, self.y_train
+    def fit(self, X_train=None, y_train=None):
+        if X_train is None:
+            X_train = self.X_train
 
+        if y_train is None:
+            y_train = self.y_train
+            
         train_samples = X_train.shape[0]
 
         # Turn up tolerance for faster convergence
@@ -215,7 +219,7 @@ class MNIST_Helper():
         plt.xlabel('Predicted label')
         plt.tight_layout()
 
-    def plot_problem_digits(self, problem_digits, expected=None, predicted=None):
+    def plot_problem_digits(self, problem_digits, wrong_class=None, num_cols=5, expected=None, predicted=None):
 
         """
         Plot mis-classified digits
@@ -223,6 +227,10 @@ class MNIST_Helper():
         Parameters
         ----------
         problem_digits: List of characters.  Each element of list is a digit
+        wrong_class: Character.
+        - show only examples that are mis-classified as wrong_class
+
+        num_cols: Integer.  Number of misclassified examples to show for each problem digit
 
         For each digit T in list: find the test set examples where true label is T but is classified otherwise.
         Plot the mis-classified test examples
@@ -236,7 +244,7 @@ class MNIST_Helper():
         X_test = self.X_test
         
         # Dimensions of plot grid
-        num_rows, num_cols = len(problem_digits), 5
+        num_rows = len(problem_digits)
         fig = plt.figure(figsize=(2*num_cols, 2*num_rows))
 
         misclassified = {}
@@ -244,7 +252,17 @@ class MNIST_Helper():
         # Plot examples for each problem digit
         for i, digit in enumerate(problem_digits): 
             # Find the mis-classified test obsevations for this digit
-            mask = (expected == digit) & (expected != predicted)
+            # Which misclassified examples do we want ?
+            # -- All
+            # -- Only those classified as wrong_class
+            if (wrong_class is not None) and (wrong_class != digit):
+                wrong_predict = (predicted == wrong_class)
+            else:
+                wrong_predict = (predicted != expected)
+                
+            # mask = (expected == digit) & (expected != predicted)
+            mask = (expected == digit) & wrong_predict
+            
             X_misclassified = X_test[mask]
             y_misclassified = predicted[mask]
 
@@ -295,3 +313,28 @@ class MNIST_Helper():
             i += 1
 
         plt.tight_layout()
+
+    def make_binary(self, digit, y_train=None, y_test=None):
+        """
+        Turn multinomial target into binary target
+
+        Parameters
+        ----------
+        digit: Character.  Value of digit on which to make target binary: "Is digit"/"Is NOT digit"
+        y_train, y_test: ndarrays.  Train/test target values
+
+        Returns
+        -------
+        Tuple (y_train, y_test)
+        """
+        if y_train is None:
+            y_train = self.y_train
+
+        if y_test is None:
+            y_test = self.y_train
+            
+        y_train_d = ( y_train == digit)
+        y_test_d  = ( y_test  == digit)
+
+        return  y_train_d, y_test_d
+

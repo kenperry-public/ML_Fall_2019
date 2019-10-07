@@ -56,6 +56,8 @@ class Recipe_Helper():
         _ = ax.set_xlabel(xlabel)
         _ = ax.set_ylabel(ylabel)
 
+        return fig, ax
+
 
     def split(self, X,y, shuffle=True, pct=.80, seed=42):
         """
@@ -239,6 +241,8 @@ class Recipe_Helper():
             _ = ax.set_xlabel(ylabel)
             _= ax.set_title(label + " Error")
             _= ax.legend()
+
+            return fig, axs
         
     def plot_resid(self, X, y, y_pred):
         resid_curve = y - y_pred
