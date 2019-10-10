@@ -108,7 +108,7 @@ class GradientDescentHelper():
         return fig, ax
 
 
-    def batchGradientDescent_lr(self, X, y, eta=0.1, n_iterations=1000, seed=42):
+    def batchGradientDescent_lr(self, X, y, alpha=0.1, n_iterations=1000, seed=42):
         m = X.shape[0]
 
         # Add intercept feature
@@ -121,7 +121,7 @@ class GradientDescentHelper():
 
         for iteration in range(n_iterations):
             gradients = 2/m * X_b.T.dot(X_b.dot(theta) - y)
-            theta = theta - eta * gradients
+            theta = theta - alpha * gradients
 
         return theta
 
@@ -133,7 +133,7 @@ class GradientDescentHelper():
 
         return y_predict
 
-    def make_movie(self, X, y, eta=0.1 , 
+    def make_movie(self, X, y, alpha=0.1 , 
               seed=42, 
               n_iterations=1000,
               theta_path=None):
@@ -159,7 +159,7 @@ class GradientDescentHelper():
                 plots.append( (X_new, y_predict) )
 
             gradients = 2/m * X_b.T.dot(X_b.dot(theta) - y)
-            theta = theta - eta * gradients
+            theta = theta - alpha * gradients
             if theta_path is not None:
                 theta_path.append(theta)
 
@@ -205,14 +205,14 @@ class GradientDescentHelper():
 
         return animate
 
-    def create_movie(self, X, y, eta=0.1, n_iterations=1000, interval=2000):
+    def create_movie(self, X, y, alpha=0.1, n_iterations=1000, interval=2000):
         # Create the frames
-        theta, movie = self.make_movie(X, y, eta=eta, n_iterations=n_iterations, theta_path=None)
+        theta, movie = self.make_movie(X, y, alpha=alpha, n_iterations=n_iterations, theta_path=None)
 
         self.movie = movie
 
         # self.def_init creates attributes of self that are required for other methods, e.g, self.fig, self.movie
-        init_func = self.def_init(X, y, title="Eta = {e:.2f}".format(e=eta) )
+        init_func = self.def_init(X, y, title="Alpha = {e:.2f}".format(e=alpha) )
         animate_func = self.def_animate(movie)
         
         fig = self.fig
