@@ -19,7 +19,7 @@ class MNIST_Helper():
         self.X, self.y = None, None
         return
 
-    def fetch_mnist_784(self):
+    def fetch_mnist_784(self, cache=True):
         """
         Fetch MNIST X, y datasets
 
@@ -36,10 +36,10 @@ class MNIST_Helper():
         cache_dir = "cache/mnist_784"
         (X_file, y_file) = [ "{c}/{f}.npy".format(c=cache_dir, f=fn) for fn in ["X", "y"] ]
 
-        if os.path.isfile(X_file) and os.path.isfile(y_file):
+        if cache and os.path.isfile(X_file) and os.path.isfile(y_file):
             print("Retrieving MNIST_784 from cache")
-            X = np.load(X_file)
-            y = np.load(y_file)
+            X = np.load(X_file, allow_pickle=True)
+            y = np.load(y_file, allow_pickle=True)
         else:
             print("Retrieving MNIST_784 from remote")
             # Load data from hiittps://www.openml.org/d/554
