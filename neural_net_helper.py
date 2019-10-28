@@ -56,16 +56,22 @@ class NN_Helper():
         return fig, axs
 
     def NN(self, W,b):
-        x = np.linspace(-2*(b+1), 2*(b+1), 100)
+        x = np.linspace(-100, 100, 100)
         z = W*x + b
         
         y = np.maximum(0, z)
-        return x,y, W, b
+        return { "x":x,
+                 "y":y,
+                 "W":W,
+                 "b":b
+                 }
+
 
     def plot_steps(self, xypairs):
         fig, ax = plt.subplots(1,1, figsize=(10,6))
-        for x,y, W, b in xypairs:
-            _ = ax.plot(x, y, label="{w:d}x + {b:d}".format(w=W, b=b))
+        for pair in xypairs:
+            x, y, W, b = [ pair[l] for l in ["x", "y", "W", "b" ] ]
+            _ = ax.plot(x, y, label="{w:d}x + {b:3.2f}".format(w=W, b=b))
             
             _ = ax.legend()
             _ = ax.set_xlabel("x")
