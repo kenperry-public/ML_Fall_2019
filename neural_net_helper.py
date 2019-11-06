@@ -113,3 +113,19 @@ class NN_Helper():
         _ = ax.set_xlabel("error")
         _ = ax.set_ylabel("loss")
         _ = ax.set_title("Loss functions")
+
+
+
+    def plot_cosine_lr(self):
+        num_batches= 1000
+        epochs = np.linspace(0, num_batches, 100)/num_batches
+        coss = np.cos( np.pi * epochs )
+        rates = 0.5 * (1 + coss)
+
+        fig, ax = plt.subplots(1,1, figsize=(10,4))
+        _ = ax.plot(epochs, rates)
+        _  = ax.set_xlabel("Epoch")
+        _  = ax.set_ylabel("Fraction of original rate")
+        _  = ax.set_title("Cosine Learning Rate schedule")
+
+        return fig, ax
