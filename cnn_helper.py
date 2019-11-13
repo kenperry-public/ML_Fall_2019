@@ -18,7 +18,7 @@ class CNN_Helper():
     def __init__(self, **params):
         return
 
-    def create_img_(self):
+    def create_img(self):
         h, w = 8, 8
         img = np.zeros((h,w))
         img[2:-2,1] = 1
