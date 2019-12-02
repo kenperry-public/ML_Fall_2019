@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
 
-<title>LSTM slides</title>
+<title>Natural Language Processing slides</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
@@ -13296,10 +13296,11 @@ get_ipython().run_line_magic(&#39;run&#39;, &#39;Latex_macros.ipynb&#39;)
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 $$
-\newcommand{\g}{\mathbf{g}}
-\newcommand{\remember}{\mathbf{remember}}
-\newcommand{\save}{\mathbf{save}}
-\newcommand{\focus}{\mathbf{focus}}
+\newcommand{\V}{\mathbf{V}}
+\newcommand{\v}{\mathbf{v}}
+\newcommand{\offset}{o}
+\newcommand{\o}{o}
+\newcommand{\E}{\mathbf{E}}
 $$
 </div>
 </div>
@@ -13308,45 +13309,11 @@ $$
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="The-importance-of-selectively-forgetting">The importance of selectively forgetting<a class="anchor-link" href="#The-importance-of-selectively-forgetting">&#182;</a></h1><p>The RNN state $\h_\tp$ is updated  as a function of the next
-element $\x_\tp$ of the input sequence.</p>
-<p>Imagine $\h_\tp$</p>
-<ul>
-<li>as a vector of features</li>
-<li>each  feature
-is an independent function of all previous inputs $\x_{(\tt')}$ for $\tt' \le \tt$.</li>
-</ul>
-
-</div>
-</div>
-</div></section><section>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>But is each and every input $\x_\tp$ relevant to all the features in $\h_\tp$ ?</p>
-<p>Probably not.</p>
-<p>So it would be very powerful</p>
-<ul>
-<li>to be able to <em>selectively update</em> elements of $\h_\tp$ while
-leaving others unchanged.</li>
-</ul>
-<p>There are even cases where we might want to reset an element of $\h_\tp$ to $0$ (forget)</p>
-<ul>
-<li>a new piece of information invalidates prior assumptions</li>
-</ul>
-
-</div>
-</div>
-</div></section><section>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>We will show how to use math to implement "conditional" statements like "if" and "switch".</p>
-<p>This will allow us to construct powerful variants of RNN's</p>
-<ul>
-<li>that allow selective, independent  modification
-of features in $\h_\tp$.</li>
-</ul>
+<h1 id="Natural-Language-Processing">Natural Language Processing<a class="anchor-link" href="#Natural-Language-Processing">&#182;</a></h1><p>The datasets for Machine Learning have historically been mainly numeric.</p>
+<p>But non-numeric data such as Image and Text is an abundant and potentially rich source of insight.</p>
+<p>We have illustrated many of the concepts in this course with Image data.</p>
+<p>We will briefly dive into the world of text.</p>
+<p><em>Natural Language Processing</em> is the set of tools/techniques that facilitate using text as raw material.</p>
 
 </div>
 </div>
@@ -13354,31 +13321,12 @@ of features in $\h_\tp$.</li>
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="From-Math-to-Program">From Math to Program<a class="anchor-link" href="#From-Math-to-Program">&#182;</a></h1><p>Early layers (FC, CNN) looked like purely mathematical objects: functions.</p>
-<p>The RNN is still a (recursively defined) function, but looks more like a program (loop).</p>
-<p>Later layer types will continue the trend of looking more like programs than mathematical functions</p>
-<ul>
-<li>binary conditionals ("if" statements)<ul>
-<li>gates</li>
+<h2 id="The-world-of-text">The world of text<a class="anchor-link" href="#The-world-of-text">&#182;</a></h2><ul>
+<li>SEC filing</li>
+<li>analyst reports</li>
+<li>news articles</li>
+<li>tweets</li>
 </ul>
-</li>
-<li>multi-case conditionals ("case", "switch" statements)<ul>
-<li>attention</li>
-</ul>
-</li>
-</ul>
-
-</div>
-</div>
-</div></section></section><section><section>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>An important requirement:</p>
-<ul>
-<li>the "program" must be differentiable in order for the layer to be used in Back Propagation !</li>
-</ul>
-<p>As we will see, this requirement results in "soft" versions of otherwise hard ("if" or "else") decisions.</p>
 
 </div>
 </div>
@@ -13386,114 +13334,308 @@ of features in $\h_\tp$.</li>
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="&quot;If&quot;-statements---Gates">"If" statements - Gates<a class="anchor-link" href="#&quot;If&quot;-statements---Gates">&#182;</a></h2><p>The sigmoid function range is $[0,1]$.</p>
-<p>This makes it attractive to use as a "gate" with which to implement an "if" statement</p>
-<p>Suppose we need to compute a $\y$ that takes on value $T$ if some condition $g$ is <code>True</code>
-and $F$ otherwise.</p>
-<p>The following product (almost) does the trick</p>
+<p>We will approach text mainly from a Deep Learning perspective</p>
+<ul>
+<li>lots of data</li>
+<li>minimal pre-processing</li>
+<li>"feature engineering" by the Neural Network</li>
+</ul>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>That is not to discount more "classical" methods for NLP</p>
+<ul>
+<li>Part of speech</li>
+<li>Stemming</li>
+<li>Lemmatization</li>
+<li>n-grams</li>
+</ul>
+<p>All of these are potentially useful as pre-processing steps for Deep Learning.</p>
+<p>However, if our data sets are big enough, it may be counter-productive to preprocess.</p>
+
+</div>
+</div>
+</div></section></section><section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Issues-with-text">Issues with text<a class="anchor-link" href="#Issues-with-text">&#182;</a></h1><p>There are several big issues to tackle regarding text data</p>
+<ul>
+<li>Words are categorical variables</li>
+<li>Token sequences (sentences/paragraphs) are variable length</li>
+<li>Token sequences: order matters</li>
+</ul>
+<p>We are using the term "token" rather than word</p>
+<ul>
+<li>tokens may include punctuation, special characters</li>
+<li>tokens may be characters rather than entire words</li>
+</ul>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Notation">Notation<a class="anchor-link" href="#Notation">&#182;</a></h2><ul>
+<li>$\w$ is a sequence of $n_\w$ tokens $\w_{(1)}, \ldots, \w_{(n_\w)}$</li>
+<li>each token is an element of vocabulary $\V: \w_\tp \in \V, 1 \le \tt \le ||\w||$<ul>
+<li>token $j$ in vocabulary $\V$ is denoted $\V_j$</li>
+</ul>
+</li>
+<li>We define two pseuduo-tokens to denote the start/end of the sentence<ul>
+<li>$\w_(0) = \text{&lt;START&gt;}$</li>
+<li>$\w_{(n_\w+1)} =\text{&lt;END&gt;}$</li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We need a function to convert a token into a numeric vector:
+$$\text{rep}: \text{token} \mapsto \mathbb{R}^{n_\V}
+$$</p>
+<p>One Hot Encoding (OHE) and word embeddings are examples of such a function.</p>
+<ul>
+<li>For OHE: $n_\V = ||\V||$</li>
+<li>For Word Embeddings: $n_\V$ is the dimension of the embedding vector</li>
+</ul>
+<p>We will extend $\text{rep}$ to sequences $\w$:
+$$\text{rep}(\w) = \left[ \text{rep}(\w_\tp) | 1 \le \tt \le ||\w||  \right]$$</p>
+
+</div>
+</div>
+</div></section></section><section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Issue-1:-Words-are-categorical-variables">Issue 1: Words are categorical variables<a class="anchor-link" href="#Issue-1:-Words-are-categorical-variables">&#182;</a></h1><p>We address the first issue relating to text: words are <em>categorical variables</em>.</p>
+<p>By now, we should know to <strong>not</strong> treat categorical variables as ordinals.</p>
+<p>Let's review the reason.</p>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Treating a word as an ordinal 
+$$\text{rep}(w) \in \mathbb{R}^1$$ 
+would imply</p>
+<ul>
+<li>"apple" &lt; "orange" is a sensible statement</li>
+<li>that this ordering is meaningful to a Machine Learning model</li>
+</ul>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><strong>Example</strong></p>
+<p>Linear regression:
 $$
-\begin{array}[ll]\\
-\g = \sigma( \ldots ) \\
-\y = \g \otimes \mathbf{T} + (1 - \g ) \otimes \mathbf{F} \\
+\y = \Theta^T \text{rep}(w)
+$$</p>
+<p>Predict $\y$ given feature vector (attributes) $\text{rep}(w)$</p>
+<ul>
+<li>by learning parameters $\Theta$</li>
+</ul>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Suppose that we tried to encode word $w$ with an integer:  $\text{rep}(w) = I_w$.</p>
+<ul>
+<li>$I_\text{apple} = 10 * I_\text{orange}$<ul>
+<li>means "apple" has 10 times the impact on prediction $\hat{\y}$ as "orange"</li>
+<li>impact is $\Theta * I_w$</li>
+</ul>
+</li>
+<li>Re-encoding "apple" with a value 10 times larger would make it 10 times more important</li>
+</ul>
+
+</div>
+</div>
+</div></section></section><section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Sparse-Represention-of-words-by-One-Hot-Encoding-(OHE)">Sparse Represention of words by One Hot Encoding (OHE)<a class="anchor-link" href="#Sparse-Represention-of-words-by-One-Hot-Encoding-(OHE)">&#182;</a></h2><p>So the natural way of representing a word is as a categorical variable</p>
+<ul>
+<li>indictor per word: $\text{Is}_\text{apple}$</li>
+<li>One Hot Encoding</li>
+</ul>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>OHE is a <em>sparse</em> representation</p>
+<ul>
+<li>length of $\text{rep}(w)$ is $| \V |$, yet only a single non-zero element</li>
+</ul>
+<p>The problem is that there are lots of words !</p>
+<ul>
+<li>$|V|$ is large !</li>
+<li>$\text{rep}(\w)$ length is $|\w| |\V|$</li>
+</ul>
+
+</div>
+</div>
+</div></section></section><section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Issue-2:-Word-streams-are-variable-length">Issue 2: Word-streams are variable length<a class="anchor-link" href="#Issue-2:-Word-streams-are-variable-length">&#182;</a></h1><p>We are already familiar with two ways of dealing with variable length input</p>
+<ul>
+<li>Use a Recurrent model, which handles sequences of arbitrary length</li>
+<li>Convert to a fixed length representation using pooling</li>
+</ul>
+
+</div>
+</div>
+</div></section></section><section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Fixed-length-representation-via-pooling">Fixed length representation via pooling<a class="anchor-link" href="#Fixed-length-representation-via-pooling">&#182;</a></h2><p>One way to deal with a sequence $\w$ of words is to convert it to a vector  of <strong>fixed length</strong>.</p>
+<p>Once the length is fixed</p>
+<ul>
+<li>Classical and Deep Learning models taking fixed length inputs
+can work as usual.</li>
+</ul>
+<p>Doing so usually involves losing the ordering information.</p>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Bag-of-Words-(BOW):-Pooling">Bag of Words (BOW): Pooling<a class="anchor-link" href="#Bag-of-Words-(BOW):-Pooling">&#182;</a></h3><p>We define a <em>reduction</em> operation $\text{CBOW}$</p>
+<ul>
+<li>convert a sequence $\w$ of $||\w||$ elements</li>
+<li>each element of length $|| \text{rep}(\w_\tp) ||$</li>
+<li>to a fixed length vector of length $|| \text{rep}(\w_\tp) ||$</li>
+</ul>
+<p>This will necessarily lose token order: this method is called <em>Bag of Words (BOW)</em></p>
+<p>There are many operators to achieve the reduction, which we will group under the name <em>pooling</em></p>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Sum/Average">Sum/Average<a class="anchor-link" href="#Sum/Average">&#182;</a></h4>$$
+\text{CBOW}(\w) = \sum_{\tt=1}^{||\w ||} {  \text{rep}(\w_\tp) }
+$$<p>Since $\w_\tp$ is a vector, the addition operation is element-wise.</p>
+<p>So the composite vector for the sequence is the sum of the vectors of each element in the sequence.</p>
+<p>We can easily turn the Sum into an average by dividing by $||\w||$</p>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Count-vectorization:">Count vectorization:<a class="anchor-link" href="#Count-vectorization:">&#182;</a></h4><p>In the special case that 
+$$\text{rep}(\w_\tp) = \text{OHE}(\w_\tp)
+$$</p>
+<p>$\text{CBOW}(\w)_j$ is equal to the number of occurrences in sequence $\w$ of the $j^{th}$ word in $\V$.</p>
+<p>This is often called <em>Count Vectorization</em>.</p>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="TF-IDF">TF-IDF<a class="anchor-link" href="#TF-IDF">&#182;</a></h4><p>Count Vectorization is simple but ignores a basic fact or language</p>
+<ul>
+<li>word "importance" is often inversely correlated with frequency in $\V$</li>
+</ul>
+<p>In English:</p>
+<ul>
+<li>the words "a", "the" and "is" are extremely high frequency (so high counts in most $\w$).</li>
+<li>but are so common as to convey little meaning</li>
+</ul>
+<p>On the other hand, a rare word (or sequence of words) may be very distinctive ("Machine Learning").</p>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><em>Term Frequency, Inverse Document Frequency (TF-IDF)</em></p>
+<ul>
+<li>is based on the idea that
+a word that is <em>infequent</em> in the wide corpus</li>
+<li>but is frequent in a particular document in
+the corpus is very meaningul in the context of the document.</li>
+</ul>
+<p>So a document</p>
+<ul>
+<li>in which "Machine Learning" occured a disproportionately high (relative to the broad corpus)
+number of times </li>
+<li>is likely to indicate that the document is dealing with the subject of Machine Learning.</li>
+</ul>
+<p><strong>Note</strong> A similar idea is behind many Web search algorithms (Google).</p>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>TF-IDF is similar to the Count Vectorizer, but with modified counts 
+that are the product of</p>
+<ul>
+<li>the frequency of a word within a single document</li>
+<li><p>the inverse of the frequency of the word relative to all documents</p>
+</li>
+<li><p>$v$ is a word</p>
+</li>
+<li>$d$ is a document (collection of words) in set of documents $D$</li>
+</ul>
+$$
+\begin{array}[llll]\\
+\text{tf}(v,d) &amp; = &amp; \text{frequency of word } v \text{ in document } d &amp; \text{(Term Frquency)}\\
+\text{df}(v) &amp; = &amp; \text{number of documents that contain word } v \\
+\text{idf}(v) &amp; = &amp; \log( \frac{ ||D|| } { \text{df}(v) } ) + 1 &amp; \text{Inverse Document Frequency} \\
+\\
+\text{tf-idf}(v,d) &amp; = &amp; \text{tf}(v, d) * \text{idf}(v) \\
 \end{array}
 $$
 </div>
 </div>
-</div></section><section>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>$\otimes$ denotes <em>element-wise</em> multiplication (Hadamard product)</p>
-<p>This subtle difference is actually very important:</p>
-<ul>
-<li>being element-wise means
-components of the vectors are independent of one another.</li>
-<li>gradients don't interact</li>
-</ul>
-
-</div>
-</div>
-</div></section><section>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>Note that $\y, \g, \mathbf{T}, \mathbf{F}$ are all vectors, not scalars.</p>
-<p>Essentially: we are making a conditional choice for <em>each element</em> of $\y$, independently.</p>
-
-</div>
-</div>
-</div></section><section>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>If $\g$ took on only the values $0$ or $1$, this would exactly replicate a conditional.</p>
-<p>But $\g$ wouldn't be differentiable.</p>
-<p>We use a continous (soft) decision $\g$</p>
-<ul>
-<li>not hard (exactly $0$ or $1$), but in range</li>
-<li>hope that $\y$, which is a mixture of $\mathbf{T}$ and $\mathbf{F}$,
-will be "mostly" of the correct type.</li>
-</ul>
-
-</div>
-</div>
-</div></section><section>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>$\y$ being a vector of features means that our pseudo-conditional
-can update features independently.</p>
-
-</div>
-</div>
-</div></section><section>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="&quot;Switch&quot;-statements">"Switch" statements<a class="anchor-link" href="#&quot;Switch&quot;-statements">&#182;</a></h2><p>Let's generalize the binary conditional to multiple choice: a "switch" or "case" statement.</p>
-<p>Suppose we need to set $\y$ to one value from among multiple choices in $\mathbf{C}$</p>
-$$
-\begin{array}[ll]\\
-\g = \sigma( \ldots ) \\
-\y = \g \otimes \mathbf{C}  \\
-\end{array}
-$$
-</div>
-</div>
-</div></section><section>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>In the case that $\g$ were like a OHE (single element with value $1$, all other elements with value $0$)</p>
-<ul>
-<li>this would replicate a "switch" or "case" statement.</li>
-</ul>
-<p>Analagous with the "if" section, this is a soft rather than a hard choice.</p>
-<p>The "if" statement could be derived from the "switch" by making</p>
-$$
-\mathbf{C} = \left[
- \begin{matrix}
-    \mathbf{T}  \\
-    \mathbf{F}
- \end{matrix} 
- \right] \\
-$$<p>We refer to $\g$ as a <em>mask</em> for $\mathbf{C}$.</p>
-
-</div>
-</div>
 </div></section></section><section><section>
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="Motivation-for-LSTM">Motivation for LSTM<a class="anchor-link" href="#Motivation-for-LSTM">&#182;</a></h1><p>The vanilla RNN was powerful but limited</p>
+<h2 id="Detour:-Sentiment-classification-notebook-on-Colab-:-simple-model">Detour: Sentiment classification notebook on Colab : simple model<a class="anchor-link" href="#Detour:-Sentiment-classification-notebook-on-Colab-:-simple-model">&#182;</a></h2><p>Classification task</p>
 <ul>
-<li>gradients were prone to vanishing/exploding</li>
-<li>they suffered from "short term" memory: <ul>
-<li>could not capture dependencies that were too far separated by time</li>
+<li>Input: Movie review, as sequence of characters</li>
+<li>Label: Positive/Negative</li>
 </ul>
-</li>
-</ul>
-<p>LSTM's are one attempt at mitigating these two issues.</p>
+<p><a href="https://colab.research.google.com/github/kenperry-public/ML_Fall_2019/blob/master/Keras_examples_imdb_cnn.ipynb#scrollTo=shHO2IU80XJ7&amp;line=20&amp;uniqifier=1">NLP notebook: examine the data</a></p>
+<p><a href="https://colab.research.google.com/drive/15KZrB_qR63Q3KjLVdaT2BV-NgsdcXo4F#scrollTo=QtvUFJZJ7Oqi">NLP notebook: simple model</a></p>
 
 </div>
 </div>
@@ -13501,65 +13643,16 @@ $$<p>We refer to $\g$ as a <em>mask</em> for $\mathbf{C}$.</p>
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>RNNs have a single state vector $\h$ that serves a dual purpose</p>
-<ul>
-<li>a form of memory</li>
-<li>a form of transition control: deciding what action to take on the current input $\x_\tp$</li>
-</ul>
-
-</div>
-</div>
-</div></section><section>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>LSTM's separate these two roles:</p>
-<ul>
-<li>a separate "long-term" memory vector $\c$<ul>
-<li>can decide at step $\tt$ what to remember independent of action/output at $\tt$</li>
-</ul>
-</li>
-<li>a separate "short term" memory vector $\h$, used for transition control <ul>
-<li>sole responsibility is deciding on current action/output at $\tt$</li>
-<li>derived from $\c$</li>
+<h2 id="Back-from-the-detour:--summary-of-SImple-Model">Back from the detour:  summary of SImple Model<a class="anchor-link" href="#Back-from-the-detour:--summary-of-SImple-Model">&#182;</a></h2><ul>
+<li>One Hot Encoded words<ul>
+<li>OHE via an Embedding layer<ul>
+<li>Use Embedding as pedagogical device; world's <em>slowest</em> way to perform OHE !</li>
 </ul>
 </li>
 </ul>
-<p>In addition, the update equations for $\c$ (and $\h$ since it is derived from $\c$) are subtly crafted</p>
-<ul>
-<li>to diminish the issue of vanishing/exploding gradients.</li>
-</ul>
-
-</div>
-</div>
-</div></section><section>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>The LSTM will seem complicated at first, because it has many small pieces that inter-connect.</p>
-<p>The following <a href="http://blog.echen.me/2017/05/30/exploring-lstms/">Blog post by E. Chen</a> is one of the best intuitive
-explanations that I've seen.</p>
-<p>Our presentation will follow the "classical" derivation (based on the original paper and Geron's book), 
-but with a healthy assist from the blog.</p>
-
-</div>
-</div>
-</div></section></section><section><section>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="State:-Long-and-short-term">State: Long and short term<a class="anchor-link" href="#State:-Long-and-short-term">&#182;</a></h1><p>Memory/state is divided within the LSTM into two parts with different roles:</p>
-<ul>
-<li><p>short term state $\h$ used for "transition control"</p>
-<ul>
-<li>analogy: RAM, working memory</li>
-</ul>
 </li>
-<li><p>long term state: $\c$</p>
-<ul>
-<li>analogy: disk</li>
-</ul>
-</li>
+<li>Variable length sequence of words</li>
+<li>Global Pooling to reduce to fixed length</li>
 </ul>
 
 </div>
@@ -13568,29 +13661,8 @@ but with a healthy assist from the blog.</p>
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="The-LSTM-&quot;API&quot;">The LSTM "API"<a class="anchor-link" href="#The-LSTM-&quot;API&quot;">&#182;</a></h1><p>During one time step of computation, the LSTM computes 3 values</p>
-<ul>
-<li>new short term state $\h_\tp$</li>
-<li>new long term state  $\c_\tp$</li>
-<li>output $\y_\tp$ (sometimes simply taken to be same as short term state)</li>
-</ul>
-
-</div>
-</div>
-</div></section></section><section><section>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>The three separate computations are functions of</p>
-<ul>
-<li>the previous short term state $\h_{(\tt-1)}$,</li>
-<li>previous long term state $\c_{(\tt-1)}$ </li>
-<li>and the current input $x_\tp$.</li>
-</ul>
-$$
-\y_\tp , \h_\tp, \c_\tp = f(\x_\tp,  \h_{(\tt-1)}, \c_{(\tt-1)})
-$$<p>Note the recursive aspect of the computation of  $\h_\tp, \c_\tp$: they implicitly depend
-on the values of the states at all previous time steps $t' &lt; t$.</p>
+<h1 id="Issue-3:-Ordering-matters,-first-attempt-using-Convolution">Issue 3: Ordering matters, first attempt using Convolution<a class="anchor-link" href="#Issue-3:-Ordering-matters,-first-attempt-using-Convolution">&#182;</a></h1><p>Not every text problem requires the complete ordering of words.</p>
+<p>We will briefly discuss non-ordered methods of dealing with text.</p>
 
 </div>
 </div>
@@ -13598,181 +13670,19 @@ on the values of the states at all previous time steps $t' &lt; t$.</p>
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Rather than produce a distinct output $y_{(t)}$, we identify the output with the short-term state
-$$\y_\tp = \h_\tp$$</p>
-<p><strong>Geron page 493, last equation</strong></p>
-
-</div>
-</div>
-</div></section></section><section><section>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="Updating-long-term-and-short-term-state">Updating long term and short term state<a class="anchor-link" href="#Updating-long-term-and-short-term-state">&#182;</a></h1><h2 id="Overview">Overview<a class="anchor-link" href="#Overview">&#182;</a></h2><p>The basic processing step of an LSTM is</p>
+<h2 id="Neural-n-grams-using-Conv1d">Neural n-grams using Conv1d<a class="anchor-link" href="#Neural-n-grams-using-Conv1d">&#182;</a></h2><p>An <em>n-gram</em> is a sequence of $n$ consecutive tokens that encapsulates a single concept (<em>phrase</em>)</p>
+<p>An n-gram captures</p>
 <ul>
-<li>update the long term state</li>
-<li>derive a new short term state from the updated long term state</li>
-</ul>
-
-</div>
-</div>
-</div></section><section>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>There are quite a few moving parts to keep track of.</p>
-<p>Each part is represented by an update equation.</p>
-<p>The equations differ only in</p>
-<ul>
-<li>each has it's own unique weights and bias matrices</li>
-<li>the activation functions for gates are $\sigma$: keeps selectors in range $[0,1]$</li>
-<li>the activation functions for memory is $\tanh$; keeps memory in range $[-1,+1]$</li>
-</ul>
-
-</div>
-</div>
-</div></section><section>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Gates">Gates<a class="anchor-link" href="#Gates">&#182;</a></h3><p>The long term state $\c$ is a vector of "features"</p>
-<ul>
-<li>potentially very long</li>
-<li>whose elements "remember"
-concepts that prove useful for solving the problem.</li>
-</ul>
-<p>On each step, it would seem reasonable to</p>
-<ul>
-<li>be able to <em>selectively</em> update parts of the long state vectors, rather
-than the entire vector.</li>
-</ul>
-
-</div>
-</div>
-</div></section><section>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>An LSTM associates several gate vectors
-with the long term state vector.</p>
-<ul>
-<li><p>Each gate vector serves as a mask for the long term state vector, weighting each element.</p>
-</li>
-<li><p>Thus, it serves as a (continuous) way of selecting sub-parts of the long vectors.</p>
-</li>
-</ul>
-<p>There is more than one gate vector because different masks need to be applied during the update.</p>
-
-</div>
-</div>
-</div></section><section>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Update-long-term-state">Update long term state<a class="anchor-link" href="#Update-long-term-state">&#182;</a></h2><p>The first step in updating the long term state $\c_\tp$ is straight forward:</p>
-<ul>
-<li>produce a 
-new candidate vector $\c'_\tp$
-to replace the long term state.  </li>
-<li>"candidate" in that it may or may not replace $\c_\tp$</li>
-</ul>
-<p>The candidate is a function of the prior short term state $\h_{(t-1)}$ and the current input $\x_\tp$:</p>
-$$\c'_\tp = s(\x_\tp;  \h_{(t-1)}) = \tanh(\W_{x,c} x_\tp + \W_{h,c}\h_{(t-1)} + \b_c)$$<p>This is very much like the RNN state update equation, without the recursion (since LHS is $\c'$).</p>
-
-</div>
-</div>
-</div></section><section>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>Why choose $\tanh$ as the activation ?</p>
-<ul>
-<li>range is $[-1, +1]$</li>
-<li>will serve to increment/decrement  a counter ($\c_\tp$, as we will see)</li>
-</ul>
-
-</div>
-</div>
-</div></section><section>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>We may not want the candidate vector to replace <em>all</em> elements of the long term state.</p>
-<p>The gate vector $\save_\tp$</p>
-<ul>
-<li>a mask to select only those parts of the candidate
-that will  replace their counterparts.</li>
-</ul>
-
-</div>
-</div>
-</div></section><section>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>We may also decide to "forget" parts of the long term state as they may no longer be relevant.</p>
-<p>The gate vector $\remember_\tp$</p>
-<ul>
-<li>is a mask to select those parts of the <em>prior long term state vector</em>
-which should <strong>not</strong> be forgotten.</li>
-</ul>
-<p>The  update of $\c$ combines the old parts to remember with the new parts to include:
-$$\c_\tp = \remember_\tp \otimes \c_{(t-1)} + \save_\tp \otimes \c'_\tp$$</p>
-
-</div>
-</div>
-</div></section><section>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p><strong>Note</strong></p>
-<p>$\c_\tp$ has not been squashed by an activation function, so we haven't limited its range.</p>
-<p>But we <strong>have</strong> squashed the candidate (via $\tanh$) so that it's range is $[-1,+1]$</p>
-<p>So 
-$$\save_\tp \otimes \c'_\tp$$
-acts like an increment/decrement to $\c_\tp$.</p>
-<p>That is: 
-$\c_\tp$ acts like a simple counter.</p>
-
-</div>
-</div>
-</div></section><section>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p><strong>Cell state as counter</strong></p>
-<p>You can imagine how a counter might be used in a text sequence</p>
-<ul>
-<li>Count nesting level<ul>
-<li>balanced open/close delimiters</li>
-<li>itemized list counter</li>
+<li>multi-token concept<ul>
+<li>"New York City" versus [ "New", "York", "City" ]</li>
 </ul>
 </li>
-<li>Binary counts to determine conditions<ul>
-<li>inside/outside a quote</li>
-<li>inside/outside a URL</li>
-</ul>
-</li>
-<li>Count length of input<ul>
-<li>end of sentence marker more likely as sentence length increases</li>
+<li>ordering information<ul>
+<li>[ "hard", "not", "easy" ] versus [ "easy", "not", "hard" ]</li>
 </ul>
 </li>
 </ul>
-
-</div>
-</div>
-</div></section></section><section><section>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Update-short-term-state">Update short term state<a class="anchor-link" href="#Update-short-term-state">&#182;</a></h2><p>The short term state update is controlled by gate vector  $\focus_\tp$</p>
-<ul>
-<li>selects which parts of the newly-updated long term state</li>
-<li>to make part of the control program (RAM)
-$$\h_\tp = \focus_t \otimes \tanh(\c_\tp)$$</li>
-</ul>
-<p>We will also choose to output $\h_\tp$:
-$$\y_\tp  = \h_\tp$$</p>
+<p>NLP can be enhanced by replacing the subsequence of related words by the n-gram.</p>
 
 </div>
 </div>
@@ -13780,81 +13690,45 @@ $$\y_\tp  = \h_\tp$$</p>
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="The-gate-equations">The gate equations<a class="anchor-link" href="#The-gate-equations">&#182;</a></h2><p>All of the gates are updated via similar equations; each has it's own unique weight and bias matrices.</p>
-<p>Historically $\remember_\tp, \save_\tp, \focus_\tp$ have been denoted
-$$f_\tp, i_\tp, o_\tp $$</p>
-<p>for "forget" (although it really means "don't forget"!), "input", "output".</p>
-$$
-\begin{array}[lll] \\
-\remember_\tp  &amp; = &amp; f_\tp &amp;  = &amp; \sigma(\W_{x,f} \x_{(t)} + \W_{h,f}\h_{(t-1)} + \b_f) \\
-\save_\tp      &amp; = &amp; i_\tp &amp;  = &amp; \sigma(\W_{x,i} \x_{(t)} + \W_{h,i}\h_{(t-1)} + \b_i) \\
-\focus_\tp     &amp; = &amp; o_\tp &amp;  = &amp; \sigma(\W_{x,o} \x_{(t)} + \W_{h,o}\h_{(t-1)} + \b_o) \\
-\end{array}
-$$
+<p>How does one identify n-grams ? There are two approaches.</p>
+<p>The first is statistical</p>
+<ul>
+<li><p>joint frequency of the phrase's tokens being higher than the product assuming independence</p>
+</li>
+<li><p>$\pr{\text{"New York City"}} &gt; \pr{\text{"New"}} \pr{\text{"York"}} \pr{\text{"City"}}$</p>
+</li>
+</ul>
+<p>That is: the frequency of the phrase is greater than the joint probability of its components,
+assuming independence.</p>
+
 </div>
 </div>
 </div></section><section>
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>These equations are identical except for having their own unique weights and biases.</p>
-<p>They differ from the "candidate" update equation</p>
+<p>The other way is: use Machine Learning !</p>
 <ul>
-<li>latter uses a $\tanh$ activation to squash
-the long term memory candidate to the range $[-1,+1]$</li>
-<li>gates use the sigmoid $\sigma$ to keep the gates in the $[0,1]$ range.</li>
+<li>Discover consecutive $n$ tokens that are useful for some task</li>
 </ul>
+<p>Using one dimensional convolution with kernel size $n$</p>
+<ul>
+<li>the convolution encodes each group of $n$ consecutive tokens (assuming stride 1)</li>
+<li>using multiple kernels: we can create an n-gram per kernel that captures some concept</li>
+</ul>
+<p>That is: we have created a new feature, per kernel, at each location of the text sequence.</p>
 
 </div>
 </div>
-</div></section></section><section><section>
+</div></section><section>
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="LSTM-as-gated-residual-connections">LSTM as gated residual connections<a class="anchor-link" href="#LSTM-as-gated-residual-connections">&#182;</a></h1><p>We have previously described how residual (or skip) connections</p>
+<p>n-grams can capture partial ordering of words (within span $n$).</p>
+<p>So creating n-grams (with varying $n$)</p>
 <ul>
-<li>address the problem
-of vanishing/exploding gradients</li>
-<li>allowing the output of layer $\ll-1$ to "skip over" the computation in layer $\ll$.</li>
-</ul>
-<p>This applies to the gradients as well, which flow backwards and can skip a layer.</p>
-
-</div>
-</div>
-</div></section></section><section><section>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>Examine the update equation for the long term state:
-$$\c_\tp = \remember_\tp \otimes \c_{(\tt-1)} + \save_\tp \otimes \c'_\tp$$</p>
-<p>and consider element $i$ of the vector.</p>
-<p>If 
-$$
-\remember_{\tp,i} = 1, \save_{\tp, i} = 0
-$$
-then $\c_{\tp,i} = \c_{(t-1),i}$.</p>
-<p>That is, the LSTM has the ability to</p>
-<ul>
-<li>flow $\c_{(t-1),i}$ forward  unchanged</li>
-<li>and for its derivative to flow backward unchanged</li>
-</ul>
-<p>This was the key motivation of the skip connection.</p>
-
-</div>
-</div>
-</div></section></section><section><section>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>If $\focus_{\tp,i}$ is also equal to $1$</p>
-<ul>
-<li>the $i^{th}$ component of short term state $\h_{\tp,i}$ also "skips" interacting at $\tt$</li>
-<li>since
-$$\h_\tp = \focus_t \otimes \tanh(\c_\tp)$$</li>
-</ul>
-<p>So part of the power of the LSTM is</p>
-<ul>
-<li>its combination of gates and skip connections to avoid exploding/vanishing gradients.</li>
+<li>before applying Pooling </li>
+<li>retains local ordering for features within span of $n$ tokens</li>
 </ul>
 
 </div>
@@ -13863,102 +13737,49 @@ $$\h_\tp = \focus_t \otimes \tanh(\c_\tp)$$</li>
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Initial-bias-to-&quot;not-forget&quot;">Initial bias to "not forget"<a class="anchor-link" href="#Initial-bias-to-&quot;not-forget&quot;">&#182;</a></h2><p>The  update equation for the long term state:
-$$\c_\tp = \remember_\tp \otimes \c_{(t-1)} + \save_\tp \otimes \c'_\tp$$</p>
-<p>is not a true "skip" connection as it is gated by $\remember_\tp$.</p>
-
-</div>
-</div>
-</div></section><section>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>In practice; we want 
-$$\remember_\tp \approx +1
-$$
-in early <em>epochs</em> of training.</p>
-<p>This will speed up learning</p>
-<ul>
-<li>by allowing gradients to flow backwards unmodulated</li>
-<li>during the time weights need to be adjusted most (from initial, uninformed values)</li>
-</ul>
-<p>This is done by setting $\b_f$  to a large value in the equation</p>
-$$\remember_\tp   =  f_\tp   =  \sigma(\W_{x,f} \x_{(t)} + \W_{h,f}\h_{(t-1)} + \b_f) $$
-</div>
-</div>
-</div></section></section><section><section>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="Attention">Attention<a class="anchor-link" href="#Attention">&#182;</a></h1><p>Consider a many to many implementation of a Recurrent NN (RNN, LSTM, etc).</p>
-
-</div>
-</div>
-</div></section><section>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p><table>
+<table>
     <tr>
-        <th><center>RNN Encoder/Decoder</center></th>
+        <th><center>One dimensional convolution</center></th>
     </tr>
     <tr>
-        <td><img src="images/RNN_Encoder_Decoder.jpg" width=800></td>
+        <td><img src="images/NLP_conv1d.jpg" width=1000></td>
     </tr>
 </table>
-​</p>
-
 </div>
 </div>
 </div></section><section>
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>An example might be a network that adds descriptions/captions to a stream of images (video)</p>
-<ul>
-<li>input sequence: a sequence of frames</li>
-<li>output sequence: a sequence of words</li>
-</ul>
-<p>or that translates from one language to another</p>
-<ul>
-<li>input sequence: words in source language</li>
-<li>output sequence: words in target language</li>
-</ul>
-
-</div>
-</div>
-</div></section><section>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>It is very possible that the next word (time step $\tt$) might refer to a much earlier frame ($\tt' \lt \tt)$.</p>
-<p>A similar thing happens when translating between languages.</p>
-<p>There is not necessarily a correspondence between output $\tt$ and input $\tt$.</p>
-
-</div>
-</div>
-</div></section><section>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>So an LSTM needs to decide which part of the past to "attend" (pay attention) to.</p>
-<p>We can help it via a mechanism know as "attention", which we sketch below.</p>
-
-</div>
-</div>
-</div></section><section>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p><table>
+<table>
     <tr>
-        <th><center>RNN with Attention</center></th>
+        <th><center>One dimensional convolution, multiple kernels</center></th>
     </tr>
     <tr>
-        <td><img src="images/RNN_Attention.jpg" width=800></td>
+        <td><img src="images/NLP_conv1d_multi_kernel.jpg" width=1000></td>
     </tr>
 </table>
-​</p>
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<table>
+    <tr>
+        <th><center>Global Pooling</center></th>
+    </tr>
+    <tr>
+        <td><img src="images/NLP_Global_Pooling.jpg" width=600></td>
+    </tr>
+</table>
+</div>
+</div>
+</div></section></section><section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Detour:-Sentiment-classification-notebook-on-Colab-:-Neural-n-grams">Detour: Sentiment classification notebook on Colab : Neural n-grams<a class="anchor-link" href="#Detour:-Sentiment-classification-notebook-on-Colab-:-Neural-n-grams">&#182;</a></h2><p><a href="https://colab.research.google.com/github/kenperry-public/ML_Fall_2019/blob/master/Keras_examples_imdb_cnn.ipynb#scrollTo=LPChvdnzUY9f">NLP notebook: neural n-grams</a></p>
 
 </div>
 </div>
@@ -13966,12 +13787,127 @@ $$\remember_\tp   =  f_\tp   =  \sigma(\W_{x,f} \x_{(t)} + \W_{h,f}\h_{(t-1)} + 
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>The decoder is able to "select one" of the prior states, rather than just the latest one.</p>
-<p>Of course, by now, we understand that this is a "soft" select (case/switch)</p>
+<h2 id="Back-from-the-detour:--summary-of-Neural-n-grams">Back from the detour:  summary of Neural n-grams<a class="anchor-link" href="#Back-from-the-detour:--summary-of-Neural-n-grams">&#182;</a></h2><ul>
+<li>One dimensional convolution over time dimension<ul>
+<li>3-grams</li>
+</ul>
+</li>
+<li>Global Pooling</li>
+</ul>
+
+</div>
+</div>
+</div></section></section><section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Issue-1-revisited:-Sparse-verus-dense-representation-of-categoricals">Issue 1 revisited: Sparse verus dense representation of categoricals<a class="anchor-link" href="#Issue-1-revisited:-Sparse-verus-dense-representation-of-categoricals">&#182;</a></h1><h2 id="Dense-representation-of-words:-Embeddings">Dense representation of words: Embeddings<a class="anchor-link" href="#Dense-representation-of-words:-Embeddings">&#182;</a></h2><p>Sparse encodings, such as OHE</p>
 <ul>
-<li>needs to be differentiable</li>
-<li>so it provides a weighted combination of all prior states<ul>
-<li>a mask that is almost OHE becomes a true "choose one"</li>
+<li>convert a token into a vector of features</li>
+<li>where the features are orthogonal: only one is active at a time</li>
+</ul>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>This is called a <em>discrete</em> representation.</p>
+<p>Discrete representations have a major drawbacks</p>
+<ul>
+<li>they are long<ul>
+<li>$\text{rep}(\w)$ length is $||\w|| * ||\V||$</li>
+</ul>
+</li>
+<li>there is no meaningful metric of "distance" between the representation of words</li>
+</ul>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>To illustrate the "lack of distance" issue, let</p>
+$$
+\text{OHE}(w)
+$$<p>denote the One Hot Encoding of word $w$.</p>
+<p>Using dot product (cosine similarity) as a measure of similarity</p>
+<table>
+<thead><tr>
+<th>word</th>
+<th>OHE(word)</th>
+<th style="text-align:center">Similarity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>dog</td>
+<td>[1,0,0,0]</td>
+<td style="text-align:center">OHE(word) $\cdot$ OHE(dog)  = 1</td>
+</tr>
+<tr>
+<td>dogs</td>
+<td>[0,1,0,0]</td>
+<td style="text-align:center">OHE(word) $\cdot$ OHE(dog)  = 0</td>
+</tr>
+<tr>
+<td>cat</td>
+<td>[0,0,1,0]</td>
+<td style="text-align:center">OHE(word) $\cdot$ OHE(dog)  = 0</td>
+</tr>
+<tr>
+<td>apple</td>
+<td>[0,0,0,1]</td>
+<td style="text-align:center">OHE(word) $\cdot$ OHE(dog)  = 0</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Each pair of distinct words has 0 similarity</p>
+<ul>
+<li>no recognition of plural form</li>
+<li>no recognition of commonality (pets)</li>
+</ul>
+<p>This is due to the fact that only a single "feature" of the OHE is active (non-zero).</p>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>However, it's possible that, in reality, there are many "dimensions" to a word, for example</p>
+<ul>
+<li>singular/plural</li>
+<li>entity type, e.g., Person</li>
+<li>positive/negative</li>
+</ul>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<ul>
+<li>"Cats", "Dogs", "Apples"<ul>
+<li>related by being plural form</li>
+</ul>
+</li>
+<li>"Cat", "Dog"<ul>
+<li>related by being animals</li>
+</ul>
+</li>
+<li>"good", "bad"<ul>
+<li>related by being "opposites"</li>
 </ul>
 </li>
 </ul>
@@ -13982,11 +13918,26 @@ $$\remember_\tp   =  f_\tp   =  \sigma(\W_{x,f} \x_{(t)} + \W_{h,f}\h_{(t-1)} + 
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>How does the LSTM decide which of the past states to attend to ?</p>
-<p>Same way as all Machine Learning:</p>
+<p>Thus it is not unreasonable to represent a word as a short <em>dense vector</em> of features</p>
 <ul>
-<li>it is controlled by weights</li>
-<li>that are learned by training !</li>
+<li>each feature (vector element) captures a concept</li>
+<li>numeric value of element encodes the strength of the word's relation to the concept</li>
+</ul>
+<p>Ideally the features would be indepenent</p>
+<p>This is called a <em>continuous</em> word representation.</p>
+
+</div>
+</div>
+</div></section></section><section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Doing-math-with-words">Doing math with words<a class="anchor-link" href="#Doing-math-with-words">&#182;</a></h1><p>Let's explore the implication and power of dense vector representation of words.</p>
+<p>Let $\v_w$ be the dense vector/embedding for word $w$</p>
+<ul>
+<li>captures multiple aspects of a word</li>
+<li>where each element of the vector is a nearly-independent aspect</li>
+<li>then we can perform interesting mathematical manipulations on word vectors</li>
 </ul>
 
 </div>
@@ -13995,7 +13946,761 @@ $$\remember_\tp   =  f_\tp   =  \sigma(\W_{x,f} \x_{(t)} + \W_{h,f}\h_{(t-1)} + 
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>So Deep Learning layers are almost becoming little computers that learn their own programs !</p>
+<table>
+<thead><tr>
+<th>$w$</th>
+<th>$\v_w$</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>cat</td>
+<td>[.7, .5, .01 ]   </td>
+</tr>
+<tr>
+<td>cats</td>
+<td>[.7, .5, .95 ]  </td>
+</tr>
+<tr>
+<td>dog</td>
+<td>[.7, .2, .01 ]   </td>
+</tr>
+<tr>
+<td>dogs</td>
+<td>[.7, .2, .95 ]</td>
+</tr>
+<tr>
+<td>apple</td>
+<td>[.1, .4, .01 ]   </td>
+</tr>
+<tr>
+<td>apples</td>
+<td>[.1, .4, .95 ]</td>
+</tr>
+</tbody>
+</table>
+<p>Does the last dimension encode "plural form" ?
+$$
+\v_\text{cats} - \v_\text{cat} \approx \v_\text{dogs} - \v_\text{dog} \approx \v_\text{apples} - \v_\text{apple}
+$$</p>
+<p>If so:
+$$
+\v_\text{apples} \approx \v_\text{apple} + (\v_\text{cats} - \v_\text{cat})
+$$</p>
+
+</div>
+</div>
+</div></section></section><section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Word-analogies">Word analogies<a class="anchor-link" href="#Word-analogies">&#182;</a></h2><p>king:man :: ? : queen</p>
+<p>Let</p>
+<ul>
+<li>$\v_w$ be the dense vector for word $w$</li>
+<li>$d(\v_{w}, \v_{w'})$ be some measure of the distance between the two vectors $\v_{w}, \v_{w'}$<ul>
+<li>e.g., ( $1 - \text{cosine similarity}$ )</li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Using the distance metric,  define the set of words in vocabulary $\V$ that are "closest" to a word $w$.</p>
+<p>Let</p>
+<ul>
+<li>$\text{wv}_{n',d}(\v_w)$ be the dense vectors of the $n'$ words in $\V$ closest to word $w$
+$$
+\text{wv}_{n',d}(\v_w) = \{ \v_{w'} | \text{rank}_V( d(\v_{w}, \v_{w'}) ) \le n' \}
+$$</li>
+<li>$N_{n',d}(w)$ be the set of $n'$ words associated with $\text{wv}_{n',d}(\v_w)$</li>
+</ul>
+$$
+N_{n',d}(w) = \{ w' | w' \in \text{wv}_{n',d}(\v_w) \}
+$$
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We can define approximate equality of two words $w, w'$ if they are among the closest words</p>
+$$
+w \approx_{n',d} w' \; \; \text{if } \w' \in N_{n',d}(w) 
+$$<p>That is:</p>
+<ul>
+<li>word $w$ is approximately equal to word $w'$</li>
+<li>if $w'$ is among the $n'$ words closest to $w$ according to distance metric $d$.</li>
+</ul>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Finally, we can define word analogies:</p>
+<p>a:b :: c:d</p>
+<p>means</p>
+$$
+\v_a - \v_b  \approx_{n',d}  \v_c - \v_d 
+$$<p>So to solve the word analogy for $c$:
+$$
+\v_c \approx_{n',d}  \v_a - \v_b + \v_d
+$$</p>
+<p>To be concrete:
+$$
+\v_\text{king} - \v_\text{man} + \v_\text{woman} \approx_{n',d} \v_\text{queen}
+$$</p>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Why-does-adding-2-word-vectors-work">Why does adding 2 word vectors work<a class="anchor-link" href="#Why-does-adding-2-word-vectors-work">&#182;</a></h2><ul>
+<li>Mikolov<ul>
+<li>Vector for a word reflects its context</li>
+<li>Vector is log probability<ul>
+<li>so sum of log probabilities is log of product of probabilities<ul>
+<li>product is like a logical "and"</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+</div></section></section><section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="GloVe:-Pre-trained-embeddings">GloVe: Pre-trained embeddings<a class="anchor-link" href="#GloVe:-Pre-trained-embeddings">&#182;</a></h2><p>Fortunately, you don't have to create your own word-embeddings from scratch.</p>
+<p>There are a number of pre-computed embeddings freely available.</p>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>GloVe is a family of word embeddings that have been trained on large corpra</p>
+<ul>
+<li>GloVe6b<ul>
+<li>Trained on 6 Billion tokens</li>
+<li>400K words</li>
+<li>Corpus:  Wikipedia (2014) + GigaWord5 (version 5, news wires 1994-2010)</li>
+<li>Many different dense vector lengths to choose from<ul>
+<li>50, 100, 200, 300</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We will illustrate the power of word embeddings using GloVe6b vectors of length $100$.</p>
+<p>$
+\begin{array}[llllll]\\
+\text{king- man + woman} &amp;  \approx_{n',d} &amp; \text{queen } \\
+\text{man - boy + girl} &amp;  \approx_{n',d} &amp; \text{woman } \\
+\text{Paris - France + Germany} &amp;  \approx_{n',d} &amp; \text{Berlin } \\
+\text{Einstein - science + art} &amp;  \approx_{n',d} &amp; \text{Picasso} \\
+\end{array}
+$</p>
+<p>You can see that the dense vectors seem to encode "concepts", that we can manipulate mathematically.</p>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>You may discover some unintended bias</p>
+<p>$
+\begin{array}[llllll]\\
+\text{doctor - man + woman} &amp;  \approx_{n',d} &amp; \text{nurse } \\
+\text{mechanic  - man + woman} &amp;  \approx_{n',d} &amp; \text{teacher } \\
+\end{array}
+$</p>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Domain-specific-embeddings">Domain specific embeddings<a class="anchor-link" href="#Domain-specific-embeddings">&#182;</a></h3><p>Do we speak Wikipedia English in this room ?</p>
+<p>Here are the neighborhoods of some financial terms, according to GloVe:</p>
+<p>$
+\begin{array}[lll]\\
+N(\text{bull}) &amp; =  &amp; [ \text{cow, elephant, dog, wolf, pit, bear, rider, lion, horse}] \\
+N(\text{short}) &amp; =  &amp; [ \text{rather, instead, making, time, though, well, longer, shorter, long}] \\
+N(\text{strike}) &amp; =  &amp; [ \text{workers, struck, action, blow, striking, protest, stoppage, walkout, strikes}] \\
+N(\text{FX}) &amp; =  &amp; [ \text{showtime, cnbc, ff, nickelodeon, hbo, wb, cw, vh1}] \\
+\end{array}
+$</p>
+<p>It may be desirable to create word embeddings on a narrow (domain specific) corpus.</p>
+<p>This is not difficult provided you have enough data.</p>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Obtaining-Dense-Vectors:-Transfer-Learning">Obtaining Dense Vectors: Transfer Learning<a class="anchor-link" href="#Obtaining-Dense-Vectors:-Transfer-Learning">&#182;</a></h1><p>How do we obtain Dense Vector representation of words ?</p>
+<p>We learn them !</p>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Suppose we had a task T 
+that involves mapping a sequence of words to an outcome.</p>
+<p>To be concrete: mapping a movie review to an indicator of Positive/Negative sentiment.</p>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Ignoring for the moment the issue of converting variable length sequences to a fixed length</p>
+<ul>
+<li>inputs are OHE of words</li>
+<li><p>target is Positive/Negative label</p>
+</li>
+<li><p>Logistic Regression from  sentence representation to binary target Positive/Negative</p>
+</li>
+</ul>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>One could also ask</p>
+<ul>
+<li>can we map the OHE of a word $\w_\tp$ (length $|\V|$)</li>
+<li>to a shorter, dense vector $\mathbf{e}_\tp$ of length $n_e$</li>
+<li>and use the dense vector in the Logistic Regerssion</li>
+</ul>
+<p>This mapping can be represented by an an $(|\V| \times n_e)$ matrix
+$\E$</p>
+$$
+\mathbf{e}_\tp = \text{OHE}(\w_\tp)^T \E 
+$$
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Using Machine Learning,</p>
+<ul>
+<li>we solve for both the Logistic Regression parameters $\W$ <em>and</em> $\mathbf{E}$</li>
+<li>when solving the Classification Task via Logistic Regression.</li>
+</ul>
+<p>The matrix $\mathbf{E}$ is called</p>
+<ul>
+<li>an <em>embedding matrix</em> for words </li>
+<li>and
+$\e_\tp$ is called an <em>embedding</em>  or <em>word vector</em> for word $\w_\tp$.</li>
+</ul>
+<p><em>Word embeddings</em> have become an important component of Deep Learning for NLP.</p>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<table>
+    <tr>
+        <th><center>Word prediction: Neural Net</center></th>
+    </tr>
+    <tr>
+        <td><img src="images/w2v_word_prediction_layers.jpg" width=800></td>
+    </tr>
+</table>
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>In other words</p>
+<ul>
+<li>we have learned a dense vector representation of words $\mathbf{E}$</li>
+<li>that is useful for a particular classification task</li>
+</ul>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Might it be possible that the dense vector representation of words for this task</p>
+<ul>
+<li>is useful for other tasks involving words ?</li>
+<li>this is Transfer Learning</li>
+</ul>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The problem with this approach is having a large enough training set for the task $T$.</p>
+<p>We will show how to solve this problem using semi-supervised learning</p>
+<ul>
+<li>word prediction problems</li>
+</ul>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Word-prediction-problems:-high-level">Word prediction problems: high-level<a class="anchor-link" href="#Word-prediction-problems:-high-level">&#182;</a></h1><p>Let's explore how to create generally useful (as opposed to task  specific) word embeddings.</p>
+<p>In the absence of labelled data (needed for Supervised Learning)</p>
+<ul>
+<li>we can create a Semi-Supervised Learning task</li>
+</ul>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>From unlabelled sequence $\w$ define the <em>word prediction</em> problem
+as</p>
+<ul>
+<li>predict a target word given a "context" sequence of words</li>
+</ul>
+<p>For example:</p>
+<ul>
+<li>given prefix $\w_{(1)} \ldots \w_{(\tt-1)}$</li>
+<li>predict $\w_\tp$.</li>
+</ul>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The inspiration is that if you can predict the occurrence of word from it's neighbors
+that  you have somehow capture dimensions of meaning.</p>
+<p>This is often refered to as "a word is known by the company it keeps".</p>
+<ul>
+<li>"I ate an apple"</li>
+<li>"I ate a  blueberry"</li>
+<li>"I ate a pie"</li>
+</ul>
+<p>"apple", "blueberry", "pie" concept: things that you eat</p>
+<p>Word embeddings can be obtained as a by-product of this <em>word prediction</em> problem.</p>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Let $\w$ be the sequence of $n_\w$ words</p>
+<p>A <em>word prediction</em> is a mapping</p>
+<ul>
+<li>from input $\w$</li>
+<li>to a probability distribution $\hat{\y}$ over all words in vocabulary $\V$<ul>
+<li>$\hat{\y}_j = \pr{V_j}$</li>
+<li>That is: it assigns a probability to each word in the vocabulary</li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Here are some simple word prediction problems:
+$
+\begin{array}[lll]\
+\text{predict next word from context}  &amp; \pr{\w_\tp | &amp; \w_{(\tt-\offset)} \ldots, \w_{(\tt-1)} } \\
+\text{predict a surrounding word}      &amp; \pr{\w_{(\tt')} |&amp; \w_\tp } \\
+    &amp; &amp; \tt' = \{ \tt - o, \ldots, \tt + o \} - \{ \tt \} \\
+\text{predict center word from context} &amp; \pr{ \w_\tp | &amp; [ \w_{(\tt-\offset)} \ldots \w_{(\tt-1)} \w_{(\tt+1)} \ldots \w_{(\tt+\offset)} ] }  &amp; \\
+\end{array}
+$</p>
+
+</div>
+</div>
+</div></section></section><section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Word-prediction-problems,-in-detail">Word prediction problems, in detail<a class="anchor-link" href="#Word-prediction-problems,-in-detail">&#182;</a></h1><h2 id="Background:-Language-models">Background: Language models<a class="anchor-link" href="#Background:-Language-models">&#182;</a></h2><p>A <em>Language Model</em> takes a sequence of words and produces a <em>probability</em> that
+the sequence represents a sentence in the language.</p>
+<ul>
+<li><p>We will show how we can obtain this probability by predicting the probability of word $\w_\tp$
+conditional on the first $(\tt-1)$ words in the sequence.</p>
+</li>
+<li><p>We will then simplify this by a problem that involves predicting word $w_\tp$ from
+a <em>small</em> window in the neighborhood of word $\tt$.</p>
+</li>
+</ul>
+
+</div>
+</div>
+</div></section></section><section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Two variants of the window-based approach are the basis for a popular word embedding techinique:
+word2vec.</p>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Let $\w$ be the sequence of $n$ words in a sentence.</p>
+<p>A <em>language model</em></p>
+<ul>
+<li>maps $\w$ into a probability $\pr{\w}$ that $\w$ represents
+a sentence in the language.</li>
+</ul>
+<p>We can compute this probability via the chained probabilitiy
+$$
+\pr{\w} = \pr{\w_{(1)} | \w_{(0)}} \; 
+\pr{\w_{(2)} | \w_{(0)} \w{(1)}} \ldots \;
+\pr{\w_{(n_\w+1)} | \w_{(0)} \ldots \w_{(n_\w)}}
+$$</p>
+<p>or</p>
+$$
+\pr{\w} = \prod_{\tt=1}^{n_\w+1} { \pr{\w_\tp | \w_{(0)} \ldots \w_{(\tt-1)} } }
+$$
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>That is</p>
+<ul>
+<li>the probablility of $\w$ be a valid sequence of tokens ("sentence")</li>
+<li>is the chained probability of token $\w_\tp$ following prefix $\w_{(0)} \ldots \w_{(\tt-1)}$<ul>
+<li>for each $1 \le \tt \le n_\w$</li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We can determine these probabilities via a <em>maximum likelihood</em> estimate by counting 
+word sequence occurrences in our text corpus.</p>
+<p>$
+\pr{\w_\tp | \w_{(0)} \ldots \w_{(\tt-1)} } = \frac{ \text{count}_\text{Corpus} { \w_0 \ldots \w_\tp} } {\text{count}_\text{Corpus} { \w_0 \ldots \w_{(\tt-1)}}  }
+$</p>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The estimate via counting is an unrealistic ideal</p>
+<ul>
+<li>we don't have <em>all</em> possible sentences in the language; the corpus is a subset</li>
+<li>may not have <em>true</em> probability for rare words in language when corpus is small</li>
+<li>computationally expensive</li>
+<li>Out of Vocabulary (OOV) problem<ul>
+<li>tokens appearing at inference (test) time that were <em>not</em> in training</li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Window-based-models">Window based models<a class="anchor-link" href="#Window-based-models">&#182;</a></h2><p>It is more realistic to <em>approximate</em>
+$$\pr{\w_\tp | \w_{(0)} \ldots \w_{(\tt-1)} }$$
+by conditioning $\w_\tp$ on a <strong>fixed length</strong> prefix ending at $\tt-1$</p>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<ul>
+<li><p>Unigram (1-gram) approximation
+$
+\pr{\w_\tp | \w_{(0)} \ldots \w_{(\tt-1)} } \approx \pr{\w_\tp}
+$</p>
+<ul>
+<li>That is, conditional probability of $\w_i$ is just the unconditional probability.</li>
+</ul>
+</li>
+<li><p>Bigram (2-gram) approximation
+$
+\pr{\w_\tp | \w_{(0)} \ldots \w_{(\tt-1)} } \approx \pr{\w_\tp | \w_{(\tt-1)} }
+$</p>
+</li>
+<li>n-gram approximation
+$
+\pr{\w_\tp | \w_{(0)} \ldots \w_{(\tt-1)} } \approx \pr{\w_i | \w_{(\tt-(n-1))} \ldots \w_{(\tt-1)} }
+$</li>
+</ul>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>You can probably see the weakness of the unigram model</p>
+<ul>
+<li>Doesn't respect word order
+$$\pr{ \text{["New", "York"]} } = \pr{ \text{["York", "New" ]} }$$</li>
+</ul>
+<p>and how increasing the window improves the approximation.</p>
+<p>The assumption that I can predict solely based on a prefix is called a <em>Markov</em> assumption.</p>
+
+</div>
+</div>
+</div></section></section><section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Word-prediction-problem-for-word2vec">Word prediction problem for word2vec<a class="anchor-link" href="#Word-prediction-problem-for-word2vec">&#182;</a></h1><p>word2vec is based on one of two prediction problems.</p>
+<ul>
+<li>predict center word given surrounding words as context</li>
+<li>precict which words can occur on either side of a given center words</li>
+</ul>
+<p>The problems are framed as:
+Predict target word $w_t$ given conditional word $w_c$</p>
+<ul>
+<li>$p(w_t|w_c) $</li>
+</ul>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The first prediction problems is called <em>Skip gram</em>: predict surrounding words</p>
+<ul>
+<li>conditional word is a "center word" that is surrounded by other words: $w_c = \w_\tp$</li>
+<li>target word is any surrounding word at a position $\tt'$ within a window of $\tt$<ul>
+<li>predict probability of any word $w_t \in \V$ being equal to $\w_{(\tt')}$ </li>
+<li>where $\tt' = \{ \tt - o, \ldots, \tt + o \} - \{ \tt \}$</li>
+</ul>
+</li>
+</ul>
+<p>The set of training examples (example/label pairs) associates with $w_c = \w_\tp$
+$$\{ (\w_\tp, \w_{(\tt')}) | \; \tt' \in \{ \tt - o, \ldots, \tt + o \} - \{ \tt \} \}$$</p>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The second prediction problem is called <em>CBOW</em></p>
+<ul>
+<li>center word $\w_\tp$</li>
+<li>conditional word $w_c$ is any word that surrounds $\w_\tp$</li>
+<li>target word is the center word $w_t = \w_\tp$<ul>
+<li>predict probability of $w_t = w_\tp$ is center word </li>
+<li>given a surrounding word $w_c \in \{ \w_{(\tt')} | \tt' = \{ \tt - o, \ldots, \tt + o \} - \{ \tt \} \}$</li>
+</ul>
+</li>
+</ul>
+<p>The set of training examples (example/label pairs) associates with taarget $\w_\tp$
+$$\{ (\w_{(\tt')}, \w_\tp) | \;  \tt' = \{ \tt - o, \ldots, \tt + o \} - \{ \tt \} \}$$</p>
+
+</div>
+</div>
+</div></section></section><section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="word2vec-derivation">word2vec derivation<a class="anchor-link" href="#word2vec-derivation">&#182;</a></h2><p>Prediction problem as
+multinomial (one class per word in vocabulary) classification problem</p>
+
+</div>
+</div>
+</div></section></section><section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>$\y = \W \x'$</p>
+<p>where</p>
+<ul>
+<li>$\y$ is a (OHE) target word </li>
+<li><p>$\x'$ is derived from (one or more) conditional words.</p>
+</li>
+<li><p>$\W$ is $(||V|| \times ||V||)$</p>
+<ul>
+<li>$\W^\ip$, denoting row $i$ of $\W$ is the "template" for target word $\V_i$<ul>
+<li>there are $||V||$ such targets, one per word in $\V$<ul>
+<li>$\W^\ip$ is length $||V||$, the size of the OHE</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We want to obtain an embedding matrix $\E$ of dimension $(|\V| \times n_e)$</p>
+<ul>
+<li>$\E^{(j)}$, the $j^{th}$ row of $\E$ is the dense vector of $\V_j$, the $j^{th}$ word in vocabulary $\V$.</li>
+<li>so $x' = \o *  \E$<ul>
+<li>where $\o = \text{OHE}(\x)$</li>
+<li>$x'$ is now length $n_e$ rather than $||V||$</li>
+</ul>
+</li>
+</ul>
+<p>The regression solves for both $\W$ (as usual) <em>and</em> $\E$.</p>
+<p>That is: we find the embedding $\E$ that is best suited for the classification regression.</p>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The matrix $\E$ would then be a map from word $\V_j$ to embedding $\e_j$.</p>
+<p>This embedding matrix would hopefully "transfer" to other NLP tasks.</p>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Let's not overlook $\W$, the matrix of classifier parameters</p>
+<ul>
+<li>$\W^{(j)}$, row $j$ of $\W$, is the "template" for target word $\V_j$<ul>
+<li>multinomial regression has one target per vocabulary word</li>
+<li>it produces a probability distribution $\hat{\y}$ over the words in $\V$</li>
+<li>$\hat{\y}_j$ is the probability associated with word $\V_j$</li>
+<li>length of $\W^{(j)}$ is $n_e$, same as embedding vector</li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>In some sense, $\W^{(j)}$ can <em>also</em> be thought of as a dense representation of $\V_i$</p>
+<ul>
+<li>$\E^{(j)}$ is  representation of $\V_j$ when it is a conditional word (independent variable)</li>
+<li>$\W^{(j)}$ is representation of $\V_j$ when it is a target word (dependent variable)<ul>
+<li>i.e., is a template for target $\V_j$</li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>It is usually the case, for simplicity</p>
+<ul>
+<li>to use average of $\E$ and $\W$ (which are the same size) as embedding</li>
+</ul>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Objective-function">Objective function<a class="anchor-link" href="#Objective-function">&#182;</a></h4><p>Maximize average log probability over the $T$ examples in training set:</p>
+$$\frac{1}{T} \sum_{\tt=1}^T { \sum_{  \tt' \in \{ \tt - o, \ldots, \tt + o \} - \{ \tt \} } { \log( p(w_{(\tt')}|w_\tp) )} } $$
+</div>
+</div>
+</div></section></section><section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Detour:-Sentiment-classification-notebook-on-Colab-:-Learned-embeddings">Detour: Sentiment classification notebook on Colab : Learned embeddings<a class="anchor-link" href="#Detour:-Sentiment-classification-notebook-on-Colab-:-Learned-embeddings">&#182;</a></h2><p><a href="https://colab.research.google.com/github/kenperry-public/ML_Fall_2019/blob/master/Keras_examples_imdb_cnn.ipynb#scrollTo=f5XrUD3X8KgP">NLP notebook: learned embeddings</a></p>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Back-from-the-detour:--summary-of-Learned-embeddings">Back from the detour:  summary of Learned embeddings<a class="anchor-link" href="#Back-from-the-detour:--summary-of-Learned-embeddings">&#182;</a></h2>
+</div>
+</div>
+</div></section></section><section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Issues-2,3-revisited:-Variable-length,-ordered-token-sequences">Issues 2,3 revisited: Variable length, ordered token sequences<a class="anchor-link" href="#Issues-2,3-revisited:-Variable-length,-ordered-token-sequences">&#182;</a></h1><p>We should already have some idea of how to deal with variable length sequences.</p>
+<p>Recurrent Neural Networks take sequence inputs and create representations (hidden states) that are
+fixed length "encodings".</p>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Recall that the RNN produces a sequence of hidden states $\h{(0)}, \ldots , \h_{(||\w||)}$.</p>
+<p>Hidden state $\h_\tp$ is effectively a summary or encoding of $\w_{(0)} \w_{(1)} \dots \w_\tp$</p>
+<ul>
+<li>it is computed after having seen the prefix of $\w$ ending at $\tt$.</li>
+</ul>
+<p>So $\h_\tp$ is a fixed length encoding of $\w_{(0)} \w_{(1)} \dots \w_\tp$.</p>
+<p>This gives us a way to convert variable length $\w$ into fixed length $\h_{(||\w||)}$</p>
 
 </div>
 </div>
